@@ -6,17 +6,20 @@
 clear
 close all
 addpath('E:\LaCie\MATLAB\helper functions\MLAnalysisOnline\')
+addpath('E:\LaCie\MATLAB\helper functions\MLAnalysisOnline\NPMK-master\NPMK\')
 %    cd 'E:\LaCie\DATA_KD\161007_E'
 %    Filename ='161007_E_brfs001';
    
 % % %   cd 'D:\LaCie\DATA_KD\brfs\Brock\151231_E'
 % % %   Filename ='151231_E_brfs001';
-
-  cd 'D:\LaCie\DATA_KD\161005_E'
-  Filename = '161005_E_brfs001';
-
 ext    = '.gBrfsGratings';
-grating = readBRFS([brdrname BRdatafile ext]);
+brdrname = 'E:\LaCie\DATA_KD\161005_E\';
+BRdatafile = '161005_E_brfs001';
+  cd(brdrname)
+  Filename = BRdatafile;
+  
+ext    = '.gBrfsGratings';
+Grating = readBRFS([brdrname BRdatafile ext]);
 
 % 1. READ NEV FILE & EXTRACT EVENT CODES/TIMES
 NEV = openNEV(strcat(Filename,'.','nev'),'noread','nomat','nosave');
@@ -60,47 +63,58 @@ for tr = 1:length(trls)
             EV.tp(obs,:)     = [start(p) stop(p)];
     end
 end
-clearvars -except EV Filename
+clearvars -except EV Filename Grating
 %%
 % contrast, soa, orientation, eye
 
-unq_contrast_s1    = nanunique(grating.s1_contrast); 
-unq_contrast_s2    = nanunique(grating.s2_contrast); 
-unq_ori_s1         = nanunique(grating.s1_tilt); 
-unq_ori_s2         = nanunique(grating.s2_tilt); 
-unq_soa            = nanunique(grating.soa); 
-unq_eye_s1         = nanunique(grating.s1_eye); 
-unq_eye_s2         = nanunique(grating.s2_eye);
-unq_stim           = unique(grating.stim);
+% % % % unq_contrast_s1    = nanunique(Grating.s1_contrast); 
+% % % % unq_contrast_s2    = nanunique(Grating.s2_contrast); 
+% % % % unq_ori_s1         = nanunique(Grating.s1_tilt); 
+% % % % unq_ori_s2         = nanunique(Grating.s2_tilt); 
+% % % % unq_soa            = nanunique(Grating.soa); 
+% % % % unq_eye_s1         = nanunique(Grating.s1_eye); 
+% % % % unq_eye_s2         = nanunique(Grating.s2_eye);
+% % % % unq_stim           = unique(Grating.stim);
 % vec = [1 1; 1 1; 2 2]; 
 % unique(vec,'rows')
 
-cond = zeros(length(grating.stim),7 );
+cond = zeros(length(Grating.stim),8 );
 
-for c = 1:length(grating.stim)
+for c = 1:length(Grating.stim)
     
-    cond(c,1) = grating.s1_eye(c);
-    cond(c,2) = grating.s2_eye(c);
-    cond(c,3) = grating.s1_tilt(c);
-    cond(c,4) = grating.s2_tilt(c);
-    cond(c,5) = grating.s1_contrast(c);
-    cond(c,6) = grating.s2_contrast(c);
-    cond(c,7) = grating.soa(c);
+    cond(c,1) = Grating.s1_eye(c);
+    cond(c,2) = Grating.s2_eye(c);
+    cond(c,3) = Grating.s1_tilt(c);
+    cond(c,4) = Grating.s2_tilt(c);
+    cond(c,5) = Grating.s1_contrast(c);
+    cond(c,6) = Grating.s2_contrast(c);
+    cond(c,7) = Grating.soa(c);
     
 end
-unq_cond = nanunique(cond,'rows');
-cellcond = num2cell(cond);
+
+
 
 %GitHub Test here. edits on line 94.
+% Commit made. Test confirmed. Publish to GitHubOnline
 
-%%% TEST.
-%  for i:length(grating.stim) 
-%  if grating.stim = 'dCOS'
-%       dCOS(i,:) = cond(i,:)
-%  else 
-%       dCOS(i,:) = nan
-%
-%
+%Error here 181105 ---> "Undefined operator '==' for input arguments of type 'cell'. "
+for s = 1:length(Grating.stim)
+   
+    if strcmp('Monocular',Grating.stim(s))
+        cond(s,8) = 1;
+    elseif strcmp('Binocular',Grating.stim(s))
+        cond(s,8) = 2;
+    elseif strcmp('dCOS',Grating.stim(s))
+        cond(s,8) = 3;
+    else
+        cond(s,8) = NaN;
+        disp('error, check line 106, for loop for grating.stim')
+    end
+end
+
+unq_cond = nanunique(cond,'rows');
+
+
 
 %%
 % 3. LOAD MATCHING NEURAL DATA
