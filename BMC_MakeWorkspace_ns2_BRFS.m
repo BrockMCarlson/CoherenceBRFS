@@ -91,6 +91,8 @@ end
 unq_cond = nanunique(cond,'rows');
 cellcond = num2cell(cond);
 
+%GitHub Test here. edits on line 94.
+
 %%% TEST.
 %  for i:length(grating.stim) 
 %  if grating.stim = 'dCOS'
