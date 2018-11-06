@@ -43,15 +43,17 @@ for tr = 1:length(trls)
             continue
         end
  
-        stimon1   =  pEvC{t} == 23 | pEvC{t} == 25;
-        stimoff1  =  pEvC{t} == 24 | pEvC{t} == 26;
-         stimon1   =  pEvC{t} == 23 | pEvC{t} == 25;
-        stimoff1  =  pEvC{t} == 24 | pEvC{t} == 26;
+        stimon1   =  pEvC{t} == 23;
+        stimoff1  =  pEvC{t} == 24;
+        stimon2   =  pEvC{t} == 25;
+        stimoff2  =  pEvC{t} == 26;
         
-        start   =  pEvT{t}(stimon1);
-        stop    =  pEvT{t}(stimoff1);
+        start1   =  pEvT{t}(stimon1);
+        stop1    =  pEvT{t}(stimoff1);
+        start2   =  pEvT{t}(stimon2);
+        stop2    =  pEvT{t}(stimoff2);
         
-        maxpres = length(stop);
+        maxpres = length(stop1);
  
     for p = 1:maxpres
             
@@ -59,29 +61,37 @@ for tr = 1:length(trls)
             obs = obs + 1;
             
             % file info
-            EV.ec(obs,:)     = [stimon1(p) stimoff1(p)];
-            EV.tp(obs,:)     = [start(p) stop(p)];
+            EV.ec1(obs,:)     = [stimon1(p) stimoff1(p)];
+            EV.tp1(obs,:)     = [start1(p) stop1(p)];
+            EV.ec2(obs,:)     = [stimon2(p) stimoff2(p)];
+ %%%%%% ERROR HERE. INDEX EXCEEDS MATRIX DIMENSIONS. Why does this problem
+ %%%%%% not occur with EV.ec2?
+            EV.tp2(obs,:)     = [start2(p) stop2(p)];
     end
 end
 clearvars -except EV Filename Grating
-%%
-% contrast, soa, orientation, eye
+%% organize stimuli conditions
+% Ignore Monocular stim for now. Look at dCOS and Binocular stim under
+% simultaneous and stimulus onset asynchrony conditions. 
+% 4 groups. 
+% A == dCOS, soa=0; B == dCOS, soa=800; C == Bi, soa=0; D == Bi, soa=800.
 
-% % % % unq_contrast_s1    = nanunique(Grating.s1_contrast); 
-% % % % unq_contrast_s2    = nanunique(Grating.s2_contrast); 
-% % % % unq_ori_s1         = nanunique(Grating.s1_tilt); 
-% % % % unq_ori_s2         = nanunique(Grating.s2_tilt); 
-% % % % unq_soa            = nanunique(Grating.soa); 
-% % % % unq_eye_s1         = nanunique(Grating.s1_eye); 
-% % % % unq_eye_s2         = nanunique(Grating.s2_eye);
-% % % % unq_stim           = unique(Grating.stim);
-% vec = [1 1; 1 1; 2 2]; 
-% unique(vec,'rows')
 
+% to look at all condition parameter options
+unq_contrast_s1    = nanunique(Grating.s1_contrast); 
+unq_contrast_s2    = nanunique(Grating.s2_contrast); 
+unq_ori_s1         = nanunique(Grating.s1_tilt); 
+unq_ori_s2         = nanunique(Grating.s2_tilt); 
+unq_soa            = nanunique(Grating.soa); 
+unq_eye_s1         = nanunique(Grating.s1_eye); 
+unq_eye_s2         = nanunique(Grating.s2_eye);
+unq_stim           = unique(Grating.stim); %note, this is a cell field
+
+%pre-allocate 
 cond = zeros(length(Grating.stim),8 );
-
+% create cond, a stim presentation x variable types variable that records
+% what was displayed on each and every trial.
 for c = 1:length(Grating.stim)
-    
     cond(c,1) = Grating.s1_eye(c);
     cond(c,2) = Grating.s2_eye(c);
     cond(c,3) = Grating.s1_tilt(c);
@@ -89,32 +99,33 @@ for c = 1:length(Grating.stim)
     cond(c,5) = Grating.s1_contrast(c);
     cond(c,6) = Grating.s2_contrast(c);
     cond(c,7) = Grating.soa(c);
-    
 end
-
-
-
-%GitHub Test here. edits on line 94.
-% Commit made. Test confirmed. Publish to GitHubOnline
-
-%Error here 181105 ---> "Undefined operator '==' for input arguments of type 'cell'. "
-for s = 1:length(Grating.stim)
-   
-    if strcmp('Monocular',Grating.stim(s))
-        cond(s,8) = 1;
-    elseif strcmp('Binocular',Grating.stim(s))
-        cond(s,8) = 2;
-    elseif strcmp('dCOS',Grating.stim(s))
-        cond(s,8) = 3;
+% Grating.stim is a cell field containing strings. This is reformatted into
+% double format where 1=Mo, 2=Bi, 3=dCOS.
+%
+for gs = 1:length(Grating.stim)
+    if strcmp('Monocular',Grating.stim(gs))
+        cond(gs,8) = 1;
+    elseif strcmp('Binocular',Grating.stim(gs))
+        cond(gs,8) = 2;
+    elseif strcmp('dCOS',Grating.stim(gs))
+        cond(gs,8) = 3;
     else
-        cond(s,8) = NaN;
-        disp('error, check line 106, for loop for grating.stim')
+        cond(gs,8) = NaN;
+        disp('error, check "gs" for-loop for grating.stim')
     end
 end
-
+% Finds all possible combinations of stimuli. Should be 64. 
 unq_cond = nanunique(cond,'rows');
 
-
+% Create groups A,B,C,D for later analysis.
+% 
+% Group A, dCOS with soa = 0. Orthagonal stim are immediatly displayed to
+% the subject. 
+%%%% NOTE: This is where I will take EV.tp data and sort it into groups.
+%%%% However, EV.tp needs to be sorted into stim 1 and stim 2 first.
+%%%% currently EV.tp is 254 rows, and it should (hopefully??) only be 901
+%%%% rows long. 
 
 %%
 % 3. LOAD MATCHING NEURAL DATA
