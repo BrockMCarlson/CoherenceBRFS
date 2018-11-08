@@ -6,17 +6,20 @@
 clear
 close all
 addpath('E:\LaCie\MATLAB\helper functions\MLAnalysisOnline\')
+addpath('E:\LaCie\MATLAB\helper functions\MLAnalysisOnline\NPMK-master\NPMK\')
 %    cd 'E:\LaCie\DATA_KD\161007_E'
 %    Filename ='161007_E_brfs001';
    
 % % %   cd 'D:\LaCie\DATA_KD\brfs\Brock\151231_E'
 % % %   Filename ='151231_E_brfs001';
-
-  cd 'D:\LaCie\DATA_KD\161005_E'
-  Filename = '161005_E_brfs001';
-
 ext    = '.gBrfsGratings';
-grating = readBRFS([brdrname BRdatafile ext]);
+brdrname = 'E:\LaCie\DATA_KD\161005_E\';
+BRdatafile = '161005_E_brfs001';
+  cd(brdrname)
+  Filename = BRdatafile;
+  
+ext    = '.gBrfsGratings';
+Grating = readBRFS([brdrname BRdatafile ext]);
 
 % 1. READ NEV FILE & EXTRACT EVENT CODES/TIMES
 NEV = openNEV(strcat(Filename,'.','nev'),'noread','nomat','nosave');
@@ -29,6 +32,7 @@ clear NEV
  
 % 2. FIND STIMULUS EVENTS/TIMES
 obs  = 0;
+obs  = 0;
 pre  = 256/1000; % 256ms
 post = 612/1000; % 612ms
 trls = find(cellfun(@(x) sum(x == 23) == sum(x == 24),pEvC));
@@ -39,66 +43,103 @@ for tr = 1:length(trls)
             % skip if trial was aborted and animal was not rewarded (event code 96)
             continue
         end
- 
-        stimon1   =  pEvC{t} == 23 | pEvC{t} == 25;
-        stimoff1  =  pEvC{t} == 24 | pEvC{t} == 26;
-         stimon1   =  pEvC{t} == 23 | pEvC{t} == 25;
-        stimoff1  =  pEvC{t} == 24 | pEvC{t} == 26;
         
-        start   =  pEvT{t}(stimon1);
-        stop    =  pEvT{t}(stimoff1);
+        % Logical index of the pEvC field asigned to trial 't' that alings
+        % with either start or stop of a stim.
+        stimon   =  pEvC{t} == 23;
+        stimoff  =  pEvC{t} == 24;
         
-        maxpres = length(stop);
+        %Based on the logical stimon index previously created, determine if
+        %there is soa or no soa. No soa gets labeled as start_noSoa - this
+        %will go into groups A and C. With Soa present, start1 and start2
+        %are created. - this will go onti groups B and D. This seperation
+        %may not be necessary and should be reviewed later. 
+        idx = find(stimon);
+        if      numel(idx) == 1     % there is no soa.
+            start_noSoa  =  pEvT{t}(stimon);
+            
+        elseif  numel(idx) == 2     %there is indeed soa
+            start1  =  pEvT{t}(stimon(idx(1)));
+            start2  =  pEvT{t}(stimon(idx(2)));
+        else
+            disp('error, please check idx loop')
+        end
+       
+        %The time at which one or both stimuli were removed
+        stop    =  pEvT{t}(stimoff);
+        
+        % trigger point
+        obs = obs + 1; 
+        
+        % Assign Ev time points with and without soa.
+        if      numel(idx) == 1     % there is no soa.
+            EV.tpNoSoa(obs,:)   = [start_noSoa stop];            
+        elseif  numel(idx) == 2     %there is indeed soa
+            EV.tpSoa(obs,:)     = [start1 start1 stop];
+        else
+            disp('error, please check idx loop')
+        end
+    
  
-    for p = 1:maxpres
-            
-            % trigger point
-            obs = obs + 1;
-            
-            % file info
-            EV.ec(obs,:)     = [stimon1(p) stimoff1(p)];
-            EV.tp(obs,:)     = [start(p) stop(p)];
+ end
+
+%clearvars -except EV Filename Grating
+%% organize stimuli conditions
+% Ignore Monocular stim for now. Look at dCOS and Binocular stim under
+% simultaneous and stimulus onset asynchrony conditions. 
+% 4 groups. 
+% A == dCOS, soa=0; B == dCOS, soa=800; C == Bi, soa=0; D == Bi, soa=800.
+
+
+% to look at all condition parameter options
+unq_contrast_s1    = nanunique(Grating.s1_contrast); 
+unq_contrast_s2    = nanunique(Grating.s2_contrast); 
+unq_ori_s1         = nanunique(Grating.s1_tilt); 
+unq_ori_s2         = nanunique(Grating.s2_tilt); 
+unq_soa            = nanunique(Grating.soa); 
+unq_eye_s1         = nanunique(Grating.s1_eye); 
+unq_eye_s2         = nanunique(Grating.s2_eye);
+unq_stim           = unique(Grating.stim); %note, this is a cell field
+
+%pre-allocate 
+cond = zeros(length(Grating.stim),8 );
+% create cond, a stim presentation x variable types variable that records
+% what was displayed on each and every trial.
+for c = 1:length(Grating.stim)
+    cond(c,1) = Grating.s1_eye(c);
+    cond(c,2) = Grating.s2_eye(c);
+    cond(c,3) = Grating.s1_tilt(c);
+    cond(c,4) = Grating.s2_tilt(c);
+    cond(c,5) = Grating.s1_contrast(c);
+    cond(c,6) = Grating.s2_contrast(c);
+    cond(c,7) = Grating.soa(c);
+end
+% Grating.stim is a cell field containing strings. This is reformatted into
+% double format where 1=Mo, 2=Bi, 3=dCOS.
+%
+for gs = 1:length(Grating.stim)
+    if strcmp('Monocular',Grating.stim(gs))
+        cond(gs,8) = 1;
+    elseif strcmp('Binocular',Grating.stim(gs))
+        cond(gs,8) = 2;
+    elseif strcmp('dCOS',Grating.stim(gs))
+        cond(gs,8) = 3;
+    else
+        cond(gs,8) = NaN;
+        disp('error, check "gs" for-loop for grating.stim')
     end
 end
-clearvars -except EV Filename
-%%
-% contrast, soa, orientation, eye
-
-unq_contrast_s1    = nanunique(grating.s1_contrast); 
-unq_contrast_s2    = nanunique(grating.s2_contrast); 
-unq_ori_s1         = nanunique(grating.s1_tilt); 
-unq_ori_s2         = nanunique(grating.s2_tilt); 
-unq_soa            = nanunique(grating.soa); 
-unq_eye_s1         = nanunique(grating.s1_eye); 
-unq_eye_s2         = nanunique(grating.s2_eye);
-unq_stim           = unique(grating.stim);
-% vec = [1 1; 1 1; 2 2]; 
-% unique(vec,'rows')
-
-cond = zeros(length(grating.stim),7 );
-
-for c = 1:length(grating.stim)
-    
-    cond(c,1) = grating.s1_eye(c);
-    cond(c,2) = grating.s2_eye(c);
-    cond(c,3) = grating.s1_tilt(c);
-    cond(c,4) = grating.s2_tilt(c);
-    cond(c,5) = grating.s1_contrast(c);
-    cond(c,6) = grating.s2_contrast(c);
-    cond(c,7) = grating.soa(c);
-    
-end
+% Finds all possible combinations of stimuli. Should be 64. 
 unq_cond = nanunique(cond,'rows');
-cellcond = num2cell(cond);
 
-%%% TEST.
-%  for i:length(grating.stim) 
-%  if grating.stim = 'dCOS'
-%       dCOS(i,:) = cond(i,:)
-%  else 
-%       dCOS(i,:) = nan
-%
-%
+% Create groups A,B,C,D for later analysis.
+% 
+% Group A, dCOS with soa = 0. Orthagonal stim are immediatly displayed to
+% the subject. 
+%%%% NOTE: This is where I will take EV.tp data and sort it into groups.
+%%%% However, EV.tp needs to be sorted into stim 1 and stim 2 first.
+%%%% currently EV.tp is 254 rows, and it should (hopefully??) only be 901
+%%%% rows long. 
 
 %%
 % 3. LOAD MATCHING NEURAL DATA
