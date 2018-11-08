@@ -32,6 +32,7 @@ clear NEV
  
 % 2. FIND STIMULUS EVENTS/TIMES
 obs  = 0;
+obs  = 0;
 pre  = 256/1000; % 256ms
 post = 612/1000; % 612ms
 trls = find(cellfun(@(x) sum(x == 23) == sum(x == 24),pEvC));
@@ -42,34 +43,47 @@ for tr = 1:length(trls)
             % skip if trial was aborted and animal was not rewarded (event code 96)
             continue
         end
- 
-        stimon1   =  pEvC{t} == 23;
-        stimoff1  =  pEvC{t} == 24;
-        stimon2   =  pEvC{t} == 25;
-        stimoff2  =  pEvC{t} == 26;
         
-        start1   =  pEvT{t}(stimon1);
-        stop1    =  pEvT{t}(stimoff1);
-        start2   =  pEvT{t}(stimon2);
-        stop2    =  pEvT{t}(stimoff2);
+        % Logical index of the pEvC field asigned to trial 't' that alings
+        % with either start or stop of a stim.
+        stimon   =  pEvC{t} == 23;
+        stimoff  =  pEvC{t} == 24;
         
-        maxpres = length(stop1);
+        %Based on the logical stimon index previously created, determine if
+        %there is soa or no soa. No soa gets labeled as start_noSoa - this
+        %will go into groups A and C. With Soa present, start1 and start2
+        %are created. - this will go onti groups B and D. This seperation
+        %may not be necessary and should be reviewed later. 
+        idx = find(stimon);
+        if      numel(idx) == 1     % there is no soa.
+            start_noSoa  =  pEvT{t}(stimon);
+            
+        elseif  numel(idx) == 2     %there is indeed soa
+            start1  =  pEvT{t}(stimon(idx(1)));
+            start2  =  pEvT{t}(stimon(idx(2)));
+        else
+            disp('error, please check idx loop')
+        end
+       
+        %The time at which one or both stimuli were removed
+        stop    =  pEvT{t}(stimoff);
+        
+        % trigger point
+        obs = obs + 1; 
+        
+        % Assign Ev time points with and without soa.
+        if      numel(idx) == 1     % there is no soa.
+            EV.tpNoSoa(obs,:)   = [start_noSoa stop];            
+        elseif  numel(idx) == 2     %there is indeed soa
+            EV.tpSoa(obs,:)     = [start1 start1 stop];
+        else
+            disp('error, please check idx loop')
+        end
+    
  
-    for p = 1:maxpres
-            
-            % trigger point
-            obs = obs + 1;
-            
-            % file info
-            EV.ec1(obs,:)     = [stimon1(p) stimoff1(p)];
-            EV.tp1(obs,:)     = [start1(p) stop1(p)];
-            EV.ec2(obs,:)     = [stimon2(p) stimoff2(p)];
- %%%%%% ERROR HERE. INDEX EXCEEDS MATRIX DIMENSIONS. Why does this problem
- %%%%%% not occur with EV.ec2?
-            EV.tp2(obs,:)     = [start2(p) stop2(p)];
-    end
-end
-clearvars -except EV Filename Grating
+ end
+
+%clearvars -except EV Filename Grating
 %% organize stimuli conditions
 % Ignore Monocular stim for now. Look at dCOS and Binocular stim under
 % simultaneous and stimulus onset asynchrony conditions. 
