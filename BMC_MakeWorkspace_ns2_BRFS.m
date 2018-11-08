@@ -1,19 +1,23 @@
 %BMC getStarted 180627 MakeWorkspace
 %Creates and saves a matlab workspace with variables used in MUA & LFP
 %processing and plotting as well as CSD processing and plotting.
-
+%181107 test
 
 clear
 close all
+
+if ispc
 addpath('E:\LaCie\MATLAB\helper functions\MLAnalysisOnline\')
 addpath('E:\LaCie\MATLAB\helper functions\MLAnalysisOnline\NPMK-master\NPMK\')
-%    cd 'E:\LaCie\DATA_KD\161007_E'
-%    Filename ='161007_E_brfs001';
-   
-% % %   cd 'D:\LaCie\DATA_KD\brfs\Brock\151231_E'
-% % %   Filename ='151231_E_brfs001';
+else
+addpath('/Volumes/PassportForMac/MATLAB/functions/helper functions/MLAnalysisOnline/NPMK 2.5.1')
+end
+
 ext    = '.gBrfsGratings';
+if ispc
 brdrname = 'E:\LaCie\DATA_KD\161005_E\';
+else
+    brdrname = ''
 BRdatafile = '161005_E_brfs001';
   cd(brdrname)
   Filename = BRdatafile;
