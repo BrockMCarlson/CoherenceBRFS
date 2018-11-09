@@ -29,7 +29,8 @@ Grating = readBRFS([brdrname BRdatafile ext]);
 
 
 % 1. READ NEV FILE & EXTRACT EVENT CODES/TIMES
-NEV = openNEV(strcat(Filename,'.','nev'),'noread','nomat','nosave');
+fname = strcat(Filename,'.','nev');
+NEV = openNEV('noread','nomat','nosave'); %check NPMK version info
 EventCodes = NEV.Data.SerialDigitalIO.UnparsedData - 128;
 EventTimes = double(NEV.Data.SerialDigitalIO.TimeStamp); 
 %EventTimes = NEV.Data.SerialDigitalIO.TimeStampSec * 1000; 
@@ -41,9 +42,9 @@ clear NEV
 obs  = 0;
 pre  = 256/1000; % 256ms
 post = 612/1000; % 612ms
-trls = find(cellfun(@(x) sum(x == 23) == sum(x == 24),pEvC));
-for tr = 1:length(trls)
-        t = trls(tr);
+
+for tr = 1:length(pEvC)
+        t = tr;
         
         if ~any(pEvC{t} == 96) % This is not necessary on the evp trails
             % skip if trial was aborted and animal was not rewarded (event code 96)
