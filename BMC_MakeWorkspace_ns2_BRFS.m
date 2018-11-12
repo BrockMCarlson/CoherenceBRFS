@@ -1,5 +1,5 @@
 %BMC getStarted 180627 MakeWorkspace
-%Creates and saves a matlab workspace with variables used in MUA & LFP
+%Creates and saves a matlab workspace with variables used inLFP
 %processing and plotting as well as CSD processing and plotting.
 %181107 test
 
@@ -29,8 +29,13 @@ Grating = readBRFS([brdrname BRdatafile ext]);
 
 
 % 1. READ NEV FILE & EXTRACT EVENT CODES/TIMES
-fname = strcat(Filename,'.','nev');
+if ispc
+   fname = strcat(Filename,'.','nev');
+    NEV = openNEV(fname,'noread','nomat','nosave'); %check NPMK version info
+else
+
 NEV = openNEV('noread','nomat','nosave'); %check NPMK version info
+end
 EventCodes = NEV.Data.SerialDigitalIO.UnparsedData - 128;
 EventTimes = double(NEV.Data.SerialDigitalIO.TimeStamp); 
 %EventTimes = NEV.Data.SerialDigitalIO.TimeStampSec * 1000; 
@@ -40,6 +45,10 @@ clear NEV
  
 % 2. FIND STIMULUS EVENTS/TIMES
 obs  = 0;
+a = 0;
+b = 0;
+c = 0;
+d = 0;
 pre  = 256/1000; % 256ms
 post = 612/1000; % 612ms
 
@@ -58,8 +67,8 @@ for tr = 1:length(pEvC)
         
         %Based on the logical stimon index previously created, determine if
         %there is soa or no soa. No soa gets labeled as start_noSoa - this
-        %will go into groups A and C. With Soa present, start1 and start2
-        %are created. - this will go onti groups B and D. This seperation
+        %will go into groups A and B. With Soa present, start1 and start2
+        %are created. - this will go onti groups C and D. This seperation
         %may not be necessary and should be reviewed later. 
         idx = find(stimon);
         if      numel(idx) == 1     % there is no soa.
@@ -75,14 +84,38 @@ for tr = 1:length(pEvC)
         %The time at which one or both stimuli were removed
         stop    =  pEvT{t}(stimoff);
         
-        % trigger point
-        obs = obs + 1; 
+% % % % %         % trigger point
+% % % % %         obs = obs + 1; 
         
         % Assign Ev time points with and without soa.
         if      numel(idx) == 1     % there is no soa.
-            EV.tpNoSoa(obs,:)   = [start_noSoa stop];            
+           % create EV.A&B
+            if strcmp('Binocular',Grating.stim(t)) %Binocular
+                a = a+1;
+                EV.A(a,:) = [start_noSoa stop];
+            elseif strcmp('dCOS',Grating.stim(t))
+                b = b+1;
+                EV.B(b,:) = [start_noSoa stop];
+            elseif strcmp('Monocular', Grating.stim(t)) % skip Monocular
+                continue % skips and dismisses all Monocular trials.
+                
+            else
+               disp('error, please check EV.A&B loop') 
+               disp(t)
+            end
+% % % % % %             EV.tpNoSoa(obs,:)   = [start_noSoa stop];            
         elseif  numel(idx) == 2     %there is indeed soa
-            EV.tpSoa(obs,:)     = [start1 start1 stop];
+            % create EV.C&D 
+            if strcmp('Binocular',Grating.stim(t)) %Binocular
+                c = c+1;
+                EV.C(c,:) = [start1 start2 stop];
+            elseif strcmp('dCOS',Grating.stim(t))
+                d = d+1;
+                EV.D(d,:) = [start1 start2 stop];
+            else
+               disp('error, please check EV.C&D loop') 
+             end
+% % % % % %             EV.tpSoa(obs,:)     = [start1 start1 stop];
         else
             disp('error, please check idx loop')
         end
@@ -90,12 +123,12 @@ for tr = 1:length(pEvC)
  
  end
 
-%clearvars -except EV Filename Grating
+
 %% organize stimuli conditions
 % Ignore Monocular stim for now. Look at dCOS and Binocular stim under
 % simultaneous and stimulus onset asynchrony conditions. 
 % 4 groups. 
-% A == dCOS, soa=0; B == dCOS, soa=800; C == Bi, soa=0; D == Bi, soa=800.
+% A == Bi, soa=0; B == dCOS, soa=0; C == Bi, soa=800; D == dCOS, soa=800.
 
 
 % to look at all condition parameter options
@@ -109,45 +142,37 @@ unq_eye_s2         = nanunique(Grating.s2_eye);
 unq_stim           = unique(Grating.stim); %note, this is a cell field
 
 %pre-allocate 
-cond = zeros(length(Grating.stim),8 );
+Cond = zeros(length(Grating.stim),8 );
 % create cond, a stim presentation x variable types variable that records
 % what was displayed on each and every trial.
 for c = 1:length(Grating.stim)
-    cond(c,1) = Grating.s1_eye(c);
-    cond(c,2) = Grating.s2_eye(c);
-    cond(c,3) = Grating.s1_tilt(c);
-    cond(c,4) = Grating.s2_tilt(c);
-    cond(c,5) = Grating.s1_contrast(c);
-    cond(c,6) = Grating.s2_contrast(c);
-    cond(c,7) = Grating.soa(c);
+    Cond(c,1) = Grating.s1_eye(c);
+    Cond(c,2) = Grating.s2_eye(c);
+    Cond(c,3) = Grating.s1_tilt(c);
+    Cond(c,4) = Grating.s2_tilt(c);
+    Cond(c,5) = Grating.s1_contrast(c);
+    Cond(c,6) = Grating.s2_contrast(c);
+    Cond(c,7) = Grating.soa(c);
 end
 % Grating.stim is a cell field containing strings. This is reformatted into
 % double format where 1=Mo, 2=Bi, 3=dCOS.
 %
 for gs = 1:length(Grating.stim)
     if strcmp('Monocular',Grating.stim(gs))
-        cond(gs,8) = 1;
+        Cond(gs,8) = 1;
     elseif strcmp('Binocular',Grating.stim(gs))
-        cond(gs,8) = 2;
+        Cond(gs,8) = 2;
     elseif strcmp('dCOS',Grating.stim(gs))
-        cond(gs,8) = 3;
+        Cond(gs,8) = 3;
     else
-        cond(gs,8) = NaN;
+        Cond(gs,8) = NaN;
         disp('error, check "gs" for-loop for grating.stim')
     end
 end
 % Finds all possible combinations of stimuli. Should be 64. 
-unq_cond = nanunique(cond,'rows');
+Unq_cond = nanunique(Cond,'rows');
 
-% Create groups A,B,C,D for later analysis.
-% 
-% Group A, dCOS with soa = 0. Orthagonal stim are immediatly displayed to
-% the subject. 
-%%%% NOTE: This is where I will take EV.tp data and sort it into groups.
-%%%% However, EV.tp needs to be sorted into stim 1 and stim 2 first.
-%%%% currently EV.tp is 254 rows, and it should (hopefully??) only be 901
-%%%% rows long. 
-
+clearvars -except EV Filename Grating Cond Unq_cond
 %%
 % 3. LOAD MATCHING NEURAL DATA
 if exist(strcat(Filename,'.ns2'),'file') == 2
@@ -206,7 +231,7 @@ for e = 1:N.electrodes
     end
     
 end
-clearvars -except fMUA rawLFP EV Filename NeuralLabels Fs extension
+clearvars -except fMUA rawLFP EV Filename NeuralLabels Fs extension Cond Unq_cond
 %% sort electrodes order
 electrodes = unique(NeuralLabels);
  for ch = 1:length(electrodes)
@@ -240,9 +265,9 @@ LFP = lpLFP; % placeholder. only needed for ns2 version. see below.
 % 1kHz. This step is not necessary in the ns2 version.
 clear lpLFP
 
-clearvars -except LFP MUA EV Filename extension
+clearvars -except LFP MUA EV Filename extension Cond Unq_cond
 
-% %Final variable exports are 'MUA' and 'onekHzLFP'.
+% %Final variable exports are 'MUA' and 'LFP'.
 % %Units are 625532x48 double. This is samples x chan.
 % save WorkspaceForProcessing_180705_evp001_test.mat
 % 
@@ -256,7 +281,7 @@ clearvars -except LFP MUA EV Filename extension
 %Units are 625532x48 double. This is samples x chan.
 dateFormatOut = 'yyyy-mm-dd';
 saveDate = datestr(now,dateFormatOut);
-saveName = strcat('TESTWorkspace','_',Filename,extension,'_',saveDate);
+saveName = strcat('BRFSWorkspace','_',Filename,extension,'_',saveDate);
 clear dateFormatOut saveDate
 save(saveName);
 
@@ -265,4 +290,4 @@ save(saveName);
 load gong
 sound(y,Fs)
 
-
+clear y Fs
