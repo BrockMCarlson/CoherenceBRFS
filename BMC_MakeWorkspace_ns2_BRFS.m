@@ -9,6 +9,7 @@ close all
 if ispc
 addpath('E:\LaCie\MATLAB\helper functions\MLAnalysisOnline\')
 addpath('E:\LaCie\MATLAB\helper functions\MLAnalysisOnline\NPMK-master\NPMK\')
+addpath('E:\LaCie\MATLAB\Raw Data code\LaCieGitHub\CoherenceBRFS')
 else
 addpath('/Volumes/PassportForMac/MATLAB/functions/helper functions/MLAnalysisOnline/NPMK 2.5.1')
 addpath('/Volumes/PassportForMac/MATLAB/functions/helper functions/MLAnalysisOnline');
@@ -129,48 +130,7 @@ for tr = 1:length(pEvC)
 % simultaneous and stimulus onset asynchrony conditions. 
 % 4 groups. 
 % A == Bi, soa=0; B == dCOS, soa=0; C == Bi, soa=800; D == dCOS, soa=800.
-
-
-% to look at all condition parameter options
-unq_contrast_s1    = nanunique(Grating.s1_contrast); 
-unq_contrast_s2    = nanunique(Grating.s2_contrast); 
-unq_ori_s1         = nanunique(Grating.s1_tilt); 
-unq_ori_s2         = nanunique(Grating.s2_tilt); 
-unq_soa            = nanunique(Grating.soa); 
-unq_eye_s1         = nanunique(Grating.s1_eye); 
-unq_eye_s2         = nanunique(Grating.s2_eye);
-unq_stim           = unique(Grating.stim); %note, this is a cell field
-
-%pre-allocate 
-Cond = zeros(length(Grating.stim),8 );
-% create cond, a stim presentation x variable types variable that records
-% what was displayed on each and every trial.
-for c = 1:length(Grating.stim)
-    Cond(c,1) = Grating.s1_eye(c);
-    Cond(c,2) = Grating.s2_eye(c);
-    Cond(c,3) = Grating.s1_tilt(c);
-    Cond(c,4) = Grating.s2_tilt(c);
-    Cond(c,5) = Grating.s1_contrast(c);
-    Cond(c,6) = Grating.s2_contrast(c);
-    Cond(c,7) = Grating.soa(c);
-end
-% Grating.stim is a cell field containing strings. This is reformatted into
-% double format where 1=Mo, 2=Bi, 3=dCOS.
-%
-for gs = 1:length(Grating.stim)
-    if strcmp('Monocular',Grating.stim(gs))
-        Cond(gs,8) = 1;
-    elseif strcmp('Binocular',Grating.stim(gs))
-        Cond(gs,8) = 2;
-    elseif strcmp('dCOS',Grating.stim(gs))
-        Cond(gs,8) = 3;
-    else
-        Cond(gs,8) = NaN;
-        disp('error, check "gs" for-loop for grating.stim')
-    end
-end
-% Finds all possible combinations of stimuli. Should be 64. 
-Unq_cond = nanunique(Cond,'rows');
+[Cond, Unq_cond] = allocateConditions(Grating, pEvC);
 
 clearvars -except EV Filename Grating Cond Unq_cond
 %%
