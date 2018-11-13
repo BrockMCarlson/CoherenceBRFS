@@ -8,35 +8,30 @@ sink = 16;
 cd 'E:\LaCie\DATA_KD\161005_E'
  
 %load WorkspaceForProcessing_180705_evp001_test.mat
-load Workspace_161005_E_evp001_2018-07-25.mat
+load BRFSWorkspace_161005_E_brfs001ns2_2018-11-13.mat
     % Available variables, 'EV.tp' 'Filename' 'LFP' 'MUA' and saveName'
  
 %% 2. Trigger windows
 
-[stimWin] = triggerStim(EV.tp,LFP);
+[stimWin.A] = triggerStim(EV.A,LFP);
+[stimWin.B] = triggerStim(EV.B,LFP);
+[stimWin.C] = triggerStim(EV.C,LFP);
+[stimWin.D] = triggerStim(EV.D,LFP);
 
 %% 3. Split the electrodes
 
-el.C.full   = stimWin.stimLFP_full(:,:,1:24);
-el.C.bl     = stimWin.stimLFP_bl(:,:,1:24);
-el.C.target = stimWin.stimLFP_target(:,:,1:24);
-el.D.full   = stimWin.stimLFP_full(:,:,25:48);
-el.D.bl     = stimWin.stimLFP_bl(:,:,25:48);
-el.D.target = stimWin.stimLFP_target(:,:,25:48);
+el.C.full   = stimWin.A.stimLFP_full(:,:,1:24);
+el.C.bl     = stimWin.A.stimLFP_bl(:,:,1:24);
+el.C.target = stimWin.A.stimLFP_target(:,:,1:24);
+% % % % % el.D.full   = stimWin.stimLFP_full(:,:,25:48);
+% % % % % el.D.bl     = stimWin.stimLFP_bl(:,:,25:48);
+% % % % % el.D.target = stimWin.stimLFP_target(:,:,25:48);
  
 %% 4. Calculate the Coherence
 [coher,f] = multiCoher(sink,el);
 
-%mean the data
-%median the data
-%%%avgCoher.mean.cxy.target.C
-
-%bl correct all
-%bl correct based on mean or median baseline
-
-%confidence intervals
-%%% coher.cxy.target.C.CI
-%plot
+cxy_target  = coher.cxy.target;
+cxy_bl      = coher.cxy.bl;
 
 % 5. Average coherence across trials
 cxy_target_avg = median(cxy_target,1);
@@ -69,9 +64,6 @@ cxy_bl_CI     = bootci(reps,@median,cxy_bl);
  
 % 10. Plot 
 close all
-
-
-
 
 % B. Plot coherence tests
 figure(2)
