@@ -73,11 +73,12 @@ for tr = 1:length(pEvC)
         %may not be necessary and should be reviewed later. 
         idx = find(stimon);
         if      numel(idx) == 1     % there is no soa.
-            start_noSoa  =  pEvT{t}(stimon);
+            start_noSoa  =  pEvT{t}(stimon); % idx could also be used here.
+                % ... % However, this was the origional logical used in the script.
             
         elseif  numel(idx) == 2     %there is indeed soa
-            start1  =  pEvT{t}(stimon(idx(1)));
-            start2  =  pEvT{t}(stimon(idx(2)));
+            start1  =  pEvT{t}(idx(1));
+            start2  =  pEvT{t}(idx(2));
         else
             disp('error, please check idx loop')
         end
