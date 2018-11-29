@@ -36,10 +36,6 @@ end
 
 % COMPUTE AVERAGE ACROSS TRIALS
 avgLFP = squeeze(mean(stimLFP,1));
-avgLFP_elC = avgLFP(:,1:32);
-
-% COMPUTE AVERAGE ACROSS TRIALS
-avgLFP = squeeze(mean(stimLFP,1));
 avgLFP_elC = avgLFP(:,1:24);
 avgLFP_elD = avgLFP(:,25:48);
 
@@ -70,8 +66,8 @@ blCSD_elD = (CSD_elD-bl_CSD_elD);
 gauss_sigma = 0.1;
 padCSD_elC = padarray(blCSD_elC,[1 0],NaN,'replicate');
 padCSD_elD = padarray(blCSD_elD,[1 0],NaN,'replicate');
-fCSD_elC = filterCSD(padCSD_elC(2:23,:),gauss_sigma);
-fCSD_elD = filterCSD(padCSD_elD(2:24,:),gauss_sigma);
+fCSD_elC = filterCSD(padCSD_elC,gauss_sigma);
+fCSD_elD = filterCSD(padCSD_elD,gauss_sigma);
 
 %% Plot CSD
 tvec = (-pre:post);
@@ -97,7 +93,7 @@ set(gca,'XTickLabel',[800 1000 1200]);
 mn2 = min(min(fCSD_elD)); mx2 = max(max(fCSD_elD)); 
 maxval2 = max([abs(mn2) abs(mx2)]);
 caxis([-maxval2 maxval2]);
-% % % % caxis([-250 250]);
+% % % %  caxis([-300 300]);
 title('161005 el 2 dCOS soa stim2');
 xlabel('time (ms)') 
 ylabel('electrode number') 
@@ -108,6 +104,9 @@ ylabel('electrode number')
 % % % % clear dateFormatOut saveDate
 % % % % saveas(figure(3),saveName)
 
+dCOS_2_elC = fCSD_elC;
+dCOS_2_elD = fCSD_elD;
+save BRFS_dCOS_2.mat dCOS_2_elC dCOS_2_elD
 
 %CONGRATS... it finished
 load gong

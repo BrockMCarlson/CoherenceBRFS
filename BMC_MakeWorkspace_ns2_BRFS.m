@@ -1,7 +1,16 @@
-%BMC getStarted 180627 MakeWorkspace
-%Creates and saves a matlab workspace with variables used inLFP
-%processing and plotting as well as CSD processing and plotting.
-%181107 test
+%BMC BRFS
+% November 2018
+% This code creates a file called "BRFSWorkspace" with important
+% variables...
+% EV - "events" - this collects the timepoints of stimuli presentations
+%   EV.A tp of simultaneous presentation.   Binocular	(parallel stim)
+%   EV.B tp of simultaneous presentation.   dCOS        (orthagonal stim)
+%   EV.C tp of Flash presentations.         Binocular	(parallel stim)
+%   EV.D tp of Flash presentations.         dCOS        (orthagonal stim)
+% Cond - "conditions" - what was presented at each timepoint
+% LFP - the actual data in format tp x el 
+% Unq_Cond - "unique conditions" - gives the 64 unique possible conditions
+%                                  across 8 different stimuli variables. 
 
 clear
 close all
@@ -15,13 +24,13 @@ addpath('/Volumes/PassportForMac/MATLAB/functions/helper functions/MLAnalysisOnl
 addpath('/Volumes/PassportForMac/MATLAB/functions/helper functions/MLAnalysisOnline');
 end
 
-ext    = '.gBrfsGratings';
+
 if ispc
-brdrname = 'E:\LaCie\DATA_KD\161005_E\';
+brdrname = 'E:\LaCie\DATA_KD\160523_E\';
 else
-    brdrname = '/Volumes/PassportForMac/DATA_KD/161005_E/';
+    brdrname = '/Volumes/PassportForMac/DATA_KD/160204_I/';
 end
-BRdatafile = '161005_E_brfs001';
+BRdatafile = '160523_E_brfs001';
   cd(brdrname)
   Filename = BRdatafile;
   
