@@ -14,10 +14,10 @@
 
 clear
 close all
-cd 'E:\LaCie\DATA_KD\161007_E\'
+cd 'E:\LaCie\DATA_KD\161005_E\'
 
 %load WorkspaceForProcessing_180705_evp001_test.mat
-load BRFSWorkspace_161007_E_brfs001ns2_2018-11-15.mat
+load BRFSWorkspace_161005_E_brfs001ns2_2018-11-16.mat
 % Available variables, 'Cond' 'EV' 'extension' 'Filename' 'LFP' 'saveName'
 % and 'Unq_cond' 
 
@@ -59,11 +59,11 @@ fCSD_elD = filterCSD(padCSD_elD,gauss_sigma);
 %% save fCSD
 cd 'E:\LaCie\DATA_KD\BRFS_fCSD'
 
-dCOS_2_elC_161007 = fCSD_elC;
-dCOS_2_elD_161007 = fCSD_elD;
+LargeResp = fCSD_dCOSoriX;
+SmallResp = fCSD_dCOSoriY;
 
-saveName = strcat('BRFS_fCSD_dCOS_2_161007');
-save(saveName,'dCOS_2_elC_161007','dCOS_2_elD_161007');
+saveName = 'fCSDfrom161007_001';
+save(saveName,'LargeResp','SmallResp');
 
 
 

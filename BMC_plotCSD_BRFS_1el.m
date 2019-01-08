@@ -12,12 +12,13 @@
     % filter CSD
     %plot
 
-clear
+ clear
 close all
 
-cd 'E:\LaCie\DATA_KD\brfs\Brock\151222_E'
+cd 'E:\LaCie\DATA_KD\161007_E'
 %load WorkspaceForProcessing_180705_evp001_test.mat
-load BRFSWorkspace001_151222_E_brfs001ns2_2018-11-26.mat
+load BRFSWorkspace001_161007_E_brfs001ns2_2018-11-26.mat
+
 % Available variables, 'Cond' 'EV' 'extension' 'Filename' 'LFP' 'saveName'
 % and 'Unq_cond' 
 
@@ -28,8 +29,8 @@ pre = 100;   % pre-stim time (baseline) in ms
 post = 500; % post-stim time in ms
 
 % TRIGGER MUA & LFP TO STIM ON
-for tr = 1:length(EV.D) % trigger to stim-on times for all trials
-    stimtm = round(EV.D(tr,2)/30) ;% divide by 30 to convert to 1kHz. Note, LFP and MUA already in 1kHZ
+for tr = 1:length(EV.C) % trigger to stim-on times for all trials
+    stimtm = round(EV.C(tr,1)/30) ;% divide by 30 to convert to 1kHz. Note, LFP and MUA already in 1kHZ
     refwin = stimtm-pre:stimtm+post;
     stimLFP(tr,:,:) = LFP(refwin,:);
 end
@@ -71,18 +72,18 @@ fCSD_elD = filterCSD(padCSD_elD,gauss_sigma);
 
 %% Plot CSD
 tvec = (-pre:post);
-chanvec_elC = linspace(2,23,size(fCSD_elC,2));
-chanvec_elD = linspace(2,24,size(fCSD_elD,2));
+chanvec_elC = linspace(1,24,size(fCSD_elC,1));
+chanvec_elD = linspace(1,24,size(fCSD_elD,2));
 
-figure(3)
-subplot(1,2,1); 
+figure 
+subplot(1,2,1);
 imagesc(tvec,chanvec_elC,fCSD_elC);
 colormap(flipud(jet)); colorbar;  vline(0);
-set(gca,'XTickLabel',[800 1000 1200]);
+set(gca,'XTickLabel',[700 800 900 1000 1100 1200 1300]);
 mn1 = min(min(fCSD_elC)); mx1 = max(max(fCSD_elC));
 maxval1 = max([abs(mn1) abs(mx1)]);
 caxis([-maxval1 maxval1]);
-title('161005 el 1 dCOS soa stim2');
+title('161007 el 1 dCOS soa stim2');
 xlabel('time (ms)') 
 ylabel('electrode number') 
 
@@ -105,8 +106,8 @@ ylabel('electrode number')
 % % % % saveas(figure(3),saveName)
 
 dCOS_2_elC = fCSD_elC;
-dCOS_2_elD = fCSD_elD;
-save BRFS_dCOS_2.mat dCOS_2_elC dCOS_2_elD
+% % % % dCOS_2_elD = fCSD_elD;
+% % % % save BRFS_dCOS_2.mat dCOS_2_elC dCOS_2_elD
 
 %CONGRATS... it finished
 load gong
