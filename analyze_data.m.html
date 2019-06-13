@@ -1,0 +1,234 @@
+%%  Analysis of Rhythmic Data (Short Course #2) %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  First, download the example data from,
+%    http://makramer.info/sfn
+%
+%  Then, load the data in MATLAB,
+
+load data.mat
+
+%  In what follows there are three examples, each making use of different
+%  data sets.
+%
+%  Example 1 uses 'v1' and 't1'.
+%  Example 2 uses 'v2' and 't2'.
+%  Example 3 uses 'v3a' and 'v3b' and 't3'.
+%
+%  Let's get started . . . 
+
+%%  Example 1:  Use v1 & t1.  Plot the data.
+
+plot(t1,v1)
+xlabel('Time [s]');
+ylabel('Voltage [mV]');
+
+%%  Example 1:  Compute the power and plot it.
+%   Q:  What is the x-axis?
+
+pow = (abs(fft(v1)).^2) / length(v1);     %Compute the spectrum.
+pow = 10*log10(pow/max(pow));             %Convert to dB.
+plot(pow)
+xlabel('Indices []');
+ylabel('Power [dB]');
+
+%%  Example 1:  Compute the spectrum and plot it with correct x-axis.
+
+pow = (abs(fft(v1)).^2) / length(v1);     %Compute the spectrum.
+pow = 10*log10(pow/max(pow));             %Convert to decibels.
+pow = pow(1:length(t1)/2+1);              %Ignore negative frequencies.
+
+dt = 0.001;                               %Define the time resolution.
+f0 = 1/dt;                                %Determine the sampling frequency.
+df = 1/max(t1);                           %Determine the frequency resolution.
+fNQ = f0 / 2;                             %Determine the Nyquist frequency.
+faxis = (0:df:fNQ);                       %Construct frequency axis.
+
+plot(faxis, pow);
+xlim([0 50])
+xlabel('Frequency [Hz]')
+ylabel('Power [dB]')
+
+%%  Example 1:  Compute the spectrum with a Hann taper.
+%   NOTE:  Requires the Signal Processing Toolbox in MATLAB.
+%          http://www.mathworks.com/products/signal/
+%   OR, write the Hann taper yourself and forget the toolbox!
+
+v0 = v1 .* hann(length(v1))';             %Multiply data by Hann taper.
+pow = (abs(fft(v0)).^2) / length(v0);     %Compute the spectrum.
+pow = 10*log10(pow/max(pow));             %Convert to decibels.
+pow = pow(1:length(t1)/2+1);              %Ignore negative frequencies.
+
+dt = 0.001;                               %Define the time resolution.
+f0 = 1/dt;                                %Determine the sampling frequency.
+df = 1/max(t1);                           %Determine the frequency resolution.
+fNQ = f0 / 2;                             %Determine the Nyquist frequency.
+faxis = (0:df:fNQ);                       %Construct frequency axis.
+
+plot(faxis, pow);
+xlim([0 50])
+xlabel('Frequency [Hz]')
+ylabel('Power [dB]')
+
+%%  Example 1:  Compute the spectrum using 'periodogram'
+%   NOTE:  Requires the Signal Processing Toolbox in MATLAB.
+%          http://www.mathworks.com/products/signal/
+
+dt = 0.001;                                 %The sampling interval in seconds.
+Fs = 1/dt;                                  %The sampling frequency in Hertz.
+
+periodogram(v1,[],length(v1),Fs);           %Only one line of code!
+xlim([0 50])                                %See MATLAB Help for details.
+
+%%  Example 1:  Compute the spectrum using Chronux.
+%   Visit http://www.chronux.org to download the Chronux software.
+
+dt = 0.001;                                 %The sampling interval in seconds.
+Fs = 1/dt;                                  %The sampling frequency in Hertz.
+
+params.Fs = Fs;                             %What are the parameters?
+params.tapers = [1 2];                      %  See Chronux docs on Chronux.org
+[S,f] = mtspectrumc(v1, params);
+S = 10*log10(S/max(S));
+
+plot(f,S);
+xlim([0 50])
+xlabel('Frequency [Hz]')
+ylabel('Power [dB]')
+
+%%
+%%%%  Begin Example 2.  %%%%
+%%%%  We'll now focus on variables 'v2' and 't2'  %%%%
+
+%%  Example 2:  Plot the data.
+plot(t2,v2)
+xlabel('Time [s]');
+
+%%  Example 2:  Compute the power spectrum of v2 and plot it.
+%   NOTE:  Requires the Signal Processing Toolbox in MATLAB.
+%          http://www.mathworks.com/products/signal/
+
+v0 = v2 .* hann(length(v2))';             %Hann taper the data.
+pow = (abs(fft(v0)).^2) / length(v0);     %Compute the spectrum.
+pow = 10*log10(pow/max(pow));             %Convert to decibels.
+pow = pow(1:length(t2)/2+1);              %Ignore negative frequencies.
+
+df = 0.1;                                 %Here, T=10s so df=0.1Hz.
+fNQ = 500;                                %Here, f0=1000Hz so fNQ=500Hz.
+faxis = (0:df:fNQ);                       %Construct frequency axis.
+
+plot(faxis, pow);
+xlim([0 50])
+xlabel('Frequency [Hz]')
+ylabel('Power [dB]')
+
+%%  Example 2:  Compute the spectrogram.
+%   NOTE:  Requires the Signal Processing Toolbox in MATLAB.
+%          http://www.mathworks.com/products/signal/
+
+dt = 0.001;                                 %The sampling interval in seconds.
+Fs = 1/dt;                                  %The sampling frequency in Hertz.
+[S,F,T]=spectrogram(v2,1000,500,1000,Fs);   %Window size is 1000 pts = 1 s
+                                            %Overlap is 500 pts = 0.5 s
+                                            %Compute fft over 1000 pts.
+S = abs(S);
+imagesc(T,F,10*log10(S/max(S(:))));  colorbar;
+axis xy
+ylim([0 20])
+xlabel('Time [s]')
+ylabel('Freq [Hz]')
+
+%%  Example 2:  Compute the multi-taper spectrogram using Chronux.
+%   Visit http://www.chronux.org to download the Chronux software.
+
+dt = 0.001;                                         %The sampling interval in seconds.
+Fs = 1/dt;                                          %The sampling frequency in Hertz.
+
+params.Fs = Fs;                                     %Define Chronux specific parameters.
+params.tapers = [2 1];                              %  See Chronux.org for details!
+[Smtm,Tmtm,Fmtm]=mtspecgramc(v2,[1 0.5],params);    %Compute the multi-taper spectrogram.
+
+imagesc(Tmtm, Fmtm, 10*log10(Smtm/max(Smtm(:)))');  %Plot the results.
+colorbar;
+axis xy
+ylim([0 20])
+xlabel('Time [s]')
+ylabel('Freq [Hz]')
+
+%%
+%%%%  Begin Example 3.  %%%%
+%%%%  We'll now focus on v3a, v3b, and t3.  %%%%
+
+%%  Example 3:  Plot the data for some trials.
+
+subplot(2,1,1)              %Plot the data from v3a, trial 1.
+plot(t3,v3a(1,:))
+
+subplot(2,1,2)              %Plot the data from v3b, trial 2.
+plot(t3,v3b(2,:))
+xlabel('Time [s]')
+
+%%  Example 3:  Compute the power spectrum of each trial, and average over trials.
+
+ntrials = 100;                                  %The number of trials.
+ttrials = 1000;                                 %Data length of each trial.
+
+for k=1:ntrials                                 %For each trial,
+    pow0 = (abs(fft(v3a(k,:))).^2)/ttrials;     %Compute spectrum of v3a,
+    powA(k,:) = 10*log10(pow0/max(pow0));         %And convert to dB.
+    pow0 = (abs(fft(v3b(k,:))).^2)/ttrials;     %Compute spectrum of v3b,
+    powB(k,:) = 10*log10(pow0/max(pow0));         %And covert to dB.
+end
+
+dt = 0.001;                                     %Define the time resolution.
+f0 = 1/dt;                                      %Determine the sampling frequency.
+df = 1/max(t1);                                 %Determine the frequency resolution.
+fNQ = f0 / 2;                                   %Determine the Nyquist frequency.
+faxis = (0:df:fNQ);                             %Construct frequency axis.
+
+subplot(1,2,1)                                  %Plot the results averaged over trials.
+plot(faxis, mean(powA(:,1:ttrials/2+1),1))
+xlim([0 50])
+xlabel('Frequency [Hz]')
+ylabel('Power [dB]')
+
+subplot(1,2,2)
+plot(faxis, mean(powB(:,1:ttrials/2+1),1))
+xlim([0 50])
+xlabel('Frequency [Hz]')
+ylabel('Power [dB]')
+
+%%  Example 3:  Compute the coherence (by hand).
+
+sxy = zeros(ntrials, ttrials);                          %Matrix to hold cross spectrum.
+sxx = zeros(ntrials, ttrials);                          %Matrix to hold power spectrum.
+syy = zeros(ntrials, ttrials);                          %Matrix to hold other power spectrum.
+for k=1:ntrials
+    sxy(k,:) = fft(v3a(k,:)).*conj(fft(v3b(k,:)));      %Compute the cross spectrum of 'a' and 'b'.
+    sxx(k,:) = fft(v3a(k,:)).*conj(fft(v3a(k,:)));      %Compute the power spectrum of 'a'.
+    syy(k,:) = fft(v3b(k,:)).*conj(fft(v3b(k,:)));      %Compute the power spectrum of 'b'.
+end
+
+coh = (abs(sum(sxy,1)).^2) ./ (sum(sxx,1) .* sum(syy,1));
+%The coherence is the magnitude of the cross spectrum squared, divied by
+%the individual power spectra.  This is actually the *magnitude squared
+%coherence*.
+
+plot(faxis, coh(1:length(coh)/2+1))
+xlim([0 50]);  ylim([0 1])
+xlabel('Frequency [Hz]')
+ylabel('Coherence')
+
+%%  Example 3:  Compute the coherence (in Chronux)
+%   Visit http://www.chronux.org to download the Chronux software.
+
+dt = 1/1000.0;               %The sampling interval is 1 ms.
+Fs = 1/dt;                   %Convert to sampling frequency.
+
+params.Fs = Fs;              %What are these parameters?
+params.tapers = [2 4];       %  See Chronux.org
+params.trialave=1;
+[C,phi,S12,S1,S2,f]=coherencyc(v3a',v3b',params);
+
+plot(f,C)
+xlim([0 50])
